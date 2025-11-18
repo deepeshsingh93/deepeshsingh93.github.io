@@ -194,21 +194,54 @@ const observerOptions = {
 const animateCounter = (element, target, duration = 2000) => {
   let current = 0;
   const increment = target / (duration / 16);
-  const suffix = element.textContent.replace(/[0-9.]/g, "");
   const isDecimal = target % 1 !== 0;
 
-  const updateCounter = () => {
-    current += increment;
-    if (current < target) {
-      element.textContent =
-        (isDecimal ? current.toFixed(1) : Math.floor(current)) + suffix;
-      requestAnimationFrame(updateCounter);
-    } else {
-      element.textContent = target + suffix;
-    }
-  };
+  // Check if element has child spans (currency/suffix)
+  const currencySpan = element.querySelector(".currency");
+  const suffixSpan = element.querySelector(".suffix");
 
-  updateCounter();
+  if (currencySpan || suffixSpan) {
+    // Handle elements with separate currency/suffix spans
+    // Find the main text node that contains the number
+    let numberTextNode = null;
+    for (let node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "") {
+        numberTextNode = node;
+        break;
+      }
+    }
+
+    const updateCounter = () => {
+      current += increment;
+      const displayValue = isDecimal ? current.toFixed(1) : Math.floor(current);
+
+      if (current < target) {
+        if (numberTextNode) {
+          numberTextNode.textContent = displayValue;
+        }
+        requestAnimationFrame(updateCounter);
+      } else {
+        if (numberTextNode) {
+          numberTextNode.textContent = target;
+        }
+      }
+    };
+    updateCounter();
+  } else {
+    // Handle simple text elements with suffix
+    const suffix = element.textContent.replace(/[0-9.]/g, "");
+    const updateCounter = () => {
+      current += increment;
+      if (current < target) {
+        element.textContent =
+          (isDecimal ? current.toFixed(1) : Math.floor(current)) + suffix;
+        requestAnimationFrame(updateCounter);
+      } else {
+        element.textContent = target + suffix;
+      }
+    };
+    updateCounter();
+  }
 };
 
 const statsObserver = new IntersectionObserver((entries) => {
@@ -217,8 +250,20 @@ const statsObserver = new IntersectionObserver((entries) => {
       entry.target.classList.add("counted");
       const statNumber = entry.target.querySelector(".stat-number");
       if (statNumber) {
-        const text = statNumber.textContent;
-        const number = parseFloat(text.replace(/[^0-9.]/g, ""));
+        // Get text content or just the number from text nodes
+        let numberText = "";
+        statNumber.childNodes.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            numberText += node.textContent;
+          }
+        });
+
+        // If no text nodes found (simple case), use full text content
+        if (!numberText.trim()) {
+          numberText = statNumber.textContent;
+        }
+
+        const number = parseFloat(numberText.replace(/[^0-9.]/g, ""));
         animateCounter(statNumber, number);
       }
     }

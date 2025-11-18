@@ -519,7 +519,7 @@ h6 {
 
 .stat-item {
   text-align: center;
-  padding: 2rem;
+  padding: 1.2rem;
   background: var(--bg-card);
   border-radius: 12px;
   border: 1px solid #e2e8f0;
@@ -534,7 +534,7 @@ h6 {
 }
 
 .stat-number {
-  font-size: 3rem;
+  font-size: 1.8rem;
   font-weight: 800;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
